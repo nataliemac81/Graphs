@@ -1,3 +1,18 @@
+import random
+
+class Queue():
+    def __init__(self):
+        self.queue = []
+    def enqueue(self, value):
+        self.queue.append(value)
+    def dequeue(self):
+        if self.size() > 0:
+            return self.queue.pop(0)
+        else:
+            return None
+    def size(self):
+        return len(self.queue)
+
 class User:
     def __init__(self, name):
         self.name = name
@@ -45,8 +60,23 @@ class SocialGraph:
         # !!!! IMPLEMENT ME
 
         # Add users
-
+        for i in range(0, num_users):
+            self.add_user(f"User {i}")
         # Create friendships
+        possible_friendships = []
+        # avoid duplicates by ensuring 1st num is smaller than 2nd
+        for user_id in self.users:
+            for friend_id in range(user_id + 1, self.last_id + 1):
+                possible_friendships.append((user_id, friend_id))
+        # shuffle possible friendships
+        random.shuffle(possible_friendships)
+        # create friendships for the first x pairs of the list
+        # formula to find x: num_users * avg_friendships // 2
+        # divide by 2 since each call to add_friendship() creates 2 friendships
+        for i in range(num_users * avg_friendships // 2):
+            friendship = possible_friendships[i]
+            self.add_friendship(friendship[0], friendship[1])
+
 
     def get_all_social_paths(self, user_id):
         """
@@ -59,6 +89,21 @@ class SocialGraph:
         """
         visited = {}  # Note that this is a dictionary, not a set
         # !!!! IMPLEMENT ME
+        neighbors_to_visit = Queue()
+        neighbors_to_visit.enqueue([user_id])
+        while neighbors_to_visit.size() > 0:
+            # dequeue the first path
+            current_path = neighbors_to_visit.dequeue()
+            # get the last vertex
+            current_vertex = current_path[-1]
+            if current_vertex not in visited:
+                # add vertex plus the path that led here to visited dict
+                visited[current_vertex] = current_path
+                # get all neighbors and add the path 
+                for neighbor in self.friendships[current_vertex]:
+                    path_copy = current_path.copy()
+                    path_copy.append(neighbor)
+                    neighbors_to_visit.enqueue(path_copy)
         return visited
 
 
