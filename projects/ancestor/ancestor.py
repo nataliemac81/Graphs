@@ -29,3 +29,44 @@ class Graph:
 
 
 def earliest_ancestor(ancestors, starting_node):
+    # transform the input into a graph
+    graph = Graph()
+    # (parent, child)
+    for pair in ancestors:
+        parent = pair[0]
+        child = pair[1]
+        graph.add_vertex(parent)
+        graph.add_vertex(child)
+        graph.add_edge(child, parent)
+    
+    # BFS
+    visited_neighbors = set()
+    neighbors_to_visit = Queue()
+    neighbors_to_visit.enqueue({'vertex':starting_node, 'path_so_far':[starting_node]})
+
+    max_path_len = 1 
+    earliest_ancestor = -1 # we have to find it still
+    while neighbors_to_visit.size() > 0:
+        vert_path = neighbors_to_visit.dequeue()
+        current_vertex = vert_path['vertex']
+        current_path = vert_path['path_so_far']
+
+        if current_vertex not in visited_neighbors:
+            # add it to set
+            visited_neighbors.add(current_vertex)
+        # check if this path is the longest. If so, update the longest 
+        # path seen variable.
+        if ((len(current_path) >= max_path_len and current_vertex < earliest_ancestor)
+        or (len(current_path) > max_path_len)):
+            earliest_ancestor = current_vertex
+            max_path_len = len(current_path)
+
+        for neighbor in graph.vertices[current_vertex]:
+            path_copy = list(current_path)
+            path_copy.append(neighbor)
+            neighbors_to_visit.enqueue({
+                'vertex': neighbor,
+                'path_so_far': path_copy
+            })
+    
+    return earliest_ancestor
