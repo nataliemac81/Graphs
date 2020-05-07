@@ -1,11 +1,38 @@
 from room import Room
 from player import Player
 from world import World
-from util import Stack, Queue
-# from graph import Graph, find_unexplored_paths
+
 
 import random
 from ast import literal_eval
+
+
+# Note: This Queue class is sub-optimal. Why?
+class Queue():
+    def __init__(self):
+        self.queue = []
+    def enqueue(self, value):
+        self.queue.append(value)
+    def dequeue(self):
+        if self.size() > 0:
+            return self.queue.pop(0)
+        else:
+            return None
+    def size(self):
+        return len(self.queue)
+
+class Stack():
+    def __init__(self):
+        self.stack = []
+    def push(self, value):
+        self.stack.append(value)
+    def pop(self):
+        if self.size() > 0:
+            return self.stack.pop()
+        else:
+            return None
+    def size(self):
+        return len(self.stack)
 
 class Graph:
 
@@ -13,11 +40,11 @@ class Graph:
     def __init__(self):
         self.vertices = {}
 
-    def add_vertex(self, vertex_id):
+    def add_vertex(self, vertex):
         """
         Add a vertex to the graph.
         """
-        self.vertices[vertex_id] = set()
+        self.vertices[vertex] = {}
 
     def add_edge(self, v1, v2, direction):
         """
@@ -55,10 +82,10 @@ class Graph:
                 for next_room in self.vertices[last_room]:
                     if next_room not in rooms:
                     # duplicate the path
-                        new_path = path[1:]
+                        new_path = first_path[1:]
                         return new_path
                     else:
-                        new_path = path[:]
+                        new_path = first_path[:]
                     # add the neighbor
                         new_path.append(next_room)
                     # add the new path to the queue
@@ -71,10 +98,10 @@ world = World()
 
 # You may uncomment the smaller graphs for development and testing purposes.
 # map_file = "/Users/nataliemccroy/Desktop/Graphs/projects/adventure/maps/test_line.txt"
-map_file = "/Users/nataliemccroy/Desktop/Graphs/projects/adventure/maps/test_cross.txt"
+# map_file = "/Users/nataliemccroy/Desktop/Graphs/projects/adventure/maps/test_cross.txt"
 # map_file = "/Users/nataliemccroy/Desktop/Graphs/projects/adventure/maps/test_loop.txt"
 # map_file = "/Users/nataliemccroy/Desktop/Graphs/projects/adventure/maps/test_loop_fork.txt"
-# map_file = "/Users/nataliemccroy/Desktop/Graphs/projects/adventure/maps/main_maze.txt"
+map_file = "/Users/nataliemccroy/Desktop/Graphs/projects/adventure/maps/main_maze.txt"
 
 # Loads the map into a dictionary
 room_graph=literal_eval(open(map_file, "r").read())
@@ -89,37 +116,20 @@ player = Player(world.starting_room)
 # Fill this out with directions to walk
 # traversal_path = ['n', 'n']
 traversal_path = []
-
-# value of a path that we haven't visited
-# unexplored_path = '?'
-
-# current room available exits
-# room_exits = player.current_room.get_exits()
-
-# random direction (available room exits)
-# random_dir = random.choice(room_exits)
-
 visited_rooms = set()
-player_starting_room = player.current_room.id
-
-visited_rooms.add(player_starting_room)
+visited_rooms.add(player.current_room.id)
 
 def traverse_graph(visited_rooms, player):
     # instantiate graph
     graph = Graph()
     traversalPath = []
-    # create plan_to_visit stack and add starting vertex
-    # plan_to_visit = Stack()
-    # plan_to_visit.push(player_starting_room)
-    # # create a set for visited vertices
-    # visited_rooms = set()
-    # while the stack is not Empty:
+
     while len(visited_rooms) < len(room_graph):
         current_room = player.current_room
-        current_room_id = current_room.id
+        room_id = current_room.id
         current_room_directions = current_room.get_exits()
         room_map = {}
-        graph.add_vertex(current_room_id)
+        graph.add_vertex(room_id)
 
         for direction in current_room_directions:
             room_in_direction = current_room.get_room_in_direction(direction).id
@@ -129,9 +139,9 @@ def traverse_graph(visited_rooms, player):
             if key not in visited_rooms:
                 graph.add_vertex(key)
         for key in room_map:
-            graph.add_edge(current_room_id, key, room_map[key])
+            graph.add_edge(room_id, key, room_map[key])
 
-        for key in graph.vertices[current_room_id]:
+        for key in graph.vertices[room_id]:
             go_back = 0
             if key not in visited_rooms:
                 direction = room_map[key]
@@ -142,18 +152,19 @@ def traverse_graph(visited_rooms, player):
             go_back += 1
         
         if go_back >= 1:
-            search_rooms = graph.find_unexplored_paths(current_room_id, visited_rooms)
+            search_rooms = graph.find_unexplored_paths(room_id, visited_rooms)
             for r in search_rooms:
                 current_room = player.current_room.id
-                direction = graph.vertices[current_room]
+                direction = graph.vertices[current_room][r]
                 player.travel(direction)
                 traversalPath.append(direction)
                 visited_rooms.add(r)
     
     return traversalPath
+    
 
 traversal_path = traverse_graph(visited_rooms, player)
-
+print(traversal_path)
 
 # TRAVERSAL TEST
 # visited_rooms = set()
